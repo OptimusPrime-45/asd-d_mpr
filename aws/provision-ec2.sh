@@ -7,7 +7,7 @@ set -euo pipefail
 # ==============================================================================
 
 REGION="${AWS_REGION:-us-east-1}"
-INSTANCE_TYPE="${EC2_INSTANCE_TYPE:-t3.medium}"
+INSTANCE_TYPE="${EC2_INSTANCE_TYPE:-t3.small}"
 KEY_NAME="${1:-fleetops-key}"
 SECURITY_GROUP_NAME="fleetops-production-sg"
 
@@ -65,6 +65,13 @@ echo "✅ AMI ID: $AMI_ID"
 USER_DATA=$(cat << 'EOF' | base64 -w 0
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Setup 2GB swap space for smooth compilation on Free Tier instances
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 # Update packages
 apt-get update -y
