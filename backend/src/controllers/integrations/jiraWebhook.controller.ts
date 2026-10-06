@@ -4,8 +4,10 @@ import { VehicleRepository } from '../../repositories/vehicle.repository.js';
 import { logger } from '../../utils/logger.js';
 
 import { env } from '../../config/env.js';
+import { jiraSyncTotal } from '../../middleware/metrics.middleware.js';
 
 const maintenanceRepository = new MaintenanceRepository();
+
 const vehicleRepository = new VehicleRepository();
 
 export class JiraWebhookController {
@@ -65,19 +67,21 @@ export class JiraWebhookController {
         });
       }
 
-      return res.status(200).json({
-        success: true,
-        message: `Successfully processed Jira webhook for ${issueKey}`,
-        data: {
-          issueKey,
-          status: statusName,
-          vehicleRegNo: maintenance.reg_no,
-          vehicleStatus: isResolved ? 'Available' : 'In_Shop',
-        },
-      });
-    } catch (error) {
-      logger.error('[JIRA WEBHOOK] Error processing webhook:', error);
-      return res.status(500).json({ success: false, message: 'Error processing Jira webhook' });
-    }
+        jiraSyncTotal.inc({ event_type: 'webhook_received', status: 'success' });
+        return res.status(200).json({
+          success: true,
+          message: `Successfully processed Jira webhook for ${issueKey}`,
+          data: {
+            issueKey,
+            status: statusName,
+            vehicleRegNo: maintenance.reg_no,
+            vehicleStatus: isResolved ? 'Available' : 'In_Shop',
+          },
+        });
+      } catch (error) {
+        jiraSyncTotal.inc({ event_type: 'webhook_received', status: 'error' });
+        logger.error('[JIRA WEBHOOK] Error processing webhook:', error);
+        return res.status(500).json({ success: false, message: 'Error processing Jira webhook' });
+      }
   }
 }

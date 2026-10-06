@@ -19,14 +19,54 @@ export const httpRequestTotal = new client.Counter({
   labelNames: ['method', 'route', 'status_code']
 });
 
+// Fleet & Domain Business Metrics
+export const tripsTotal = new client.Counter({
+  name: 'fleet_trips_total',
+  help: 'Total trips by status and action',
+  labelNames: ['action', 'status']
+});
+
+export const vehiclesActiveGauge = new client.Gauge({
+  name: 'fleet_vehicles_active_gauge',
+  help: 'Number of active vehicles in fleet by status',
+  labelNames: ['status']
+});
+
+export const maintenanceTicketsTotal = new client.Counter({
+  name: 'fleet_maintenance_tickets_total',
+  help: 'Total maintenance tickets recorded',
+  labelNames: ['priority', 'jira_synced']
+});
+
+export const jiraSyncTotal = new client.Counter({
+  name: 'jira_sync_events_total',
+  help: 'Total Jira integration sync operations and webhooks',
+  labelNames: ['event_type', 'status']
+});
+
+export const appErrorsTotal = new client.Counter({
+  name: 'app_errors_total',
+  help: 'Total application errors encountered',
+  labelNames: ['error_type', 'route']
+});
+
+export const normalizeRoute = (req: Request): string => {
+  const rawPath = req.baseUrl ? `${req.baseUrl}${req.route?.path || req.path}` : (req.route?.path || req.path);
+  if (!rawPath) return 'unknown';
+
+  return rawPath
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':id')
+    .replace(/\/\d+/g, '/:id');
+};
+
 export const metricsMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const end = httpRequestDurationMicroseconds.startTimer();
   
   res.on('finish', () => {
-    const route = req.route ? req.route.path : req.path;
+    const route = normalizeRoute(req);
     const labels = {
       method: req.method,
-      route: route || 'unknown',
+      route,
       status_code: res.statusCode.toString()
     };
     
@@ -44,3 +84,4 @@ export const getMetrics = async (): Promise<string> => {
 export const getContentType = (): string => {
   return client.register.contentType;
 };
+

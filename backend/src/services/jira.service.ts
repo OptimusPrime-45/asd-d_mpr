@@ -1,6 +1,7 @@
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { BadRequestError } from '../errors/index.js';
+import { jiraSyncTotal } from '../middleware/metrics.middleware.js';
 
 export interface CreateMaintenanceIssueParams {
   regNo: string;
@@ -153,6 +154,7 @@ export class JiraService {
       const data = (await response.json()) as { id: string; key: string; self: string };
       const issueUrl = `${this.host}/browse/${data.key}`;
 
+      jiraSyncTotal.inc({ event_type: 'issue_created', status: 'success' });
       logger.info(`Successfully created Jira issue ${data.key} for vehicle ${params.regNo}`);
       return {
         key: data.key,
@@ -161,6 +163,7 @@ export class JiraService {
         status: 'To Do',
       };
     } catch (error: any) {
+      jiraSyncTotal.inc({ event_type: 'issue_created', status: 'error' });
       logger.error('Failed to create Jira issue:', error);
       if (error instanceof BadRequestError) {
         throw error;

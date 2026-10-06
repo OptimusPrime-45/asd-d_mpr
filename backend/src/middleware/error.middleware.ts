@@ -8,8 +8,15 @@ import {
   BadRequestError,
 } from '../errors/index.js';
 import { logger } from '../utils/logger.js';
+import { appErrorsTotal, normalizeRoute } from './metrics.middleware.js';
 
 export const errorMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
+  const route = normalizeRoute(req);
+  appErrorsTotal.inc({
+    error_type: err?.name || 'Error',
+    route
+  });
+
   // 1. Handle Malformed JSON body parsing / SyntaxError from Express body-parser
   if (
     err instanceof SyntaxError &&

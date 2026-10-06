@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 
 import { TripRepository } from '../repositories/trip.repository.js';
+import { tripsTotal } from '../middleware/metrics.middleware.js';
 
 const tripRepository = new TripRepository();
 
@@ -159,6 +160,7 @@ export const createTrip = async (req: Request, res: Response, next: NextFunction
       return trip;
     });
 
+    tripsTotal.inc({ action: 'create', status: 'Draft' });
     res.status(201).json({ success: true, data: newTrip });
   } catch (error: any) {
     if (
@@ -211,6 +213,7 @@ export const updateTripStatus = async (
       return updated;
     });
 
+    tripsTotal.inc({ action: 'status_update', status: trip_status });
     res.status(200).json({ success: true, data: updatedTrip });
   } catch (error) {
     next(error);
