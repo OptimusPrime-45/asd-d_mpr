@@ -1,41 +1,51 @@
-# TransitOps - Fleet Management System
+# TransitOps - Fleet & Logistics Management System
 
-TransitOps is a comprehensive, full-stack logistics and fleet management platform designed to streamline the operations of transport and logistics companies. It provides tools for managing vehicles, drivers, trips, fuel consumption, maintenance, and expenses, all within a role-based access control system.
+TransitOps is a comprehensive, full-stack logistics and fleet management platform designed to streamline vehicle operations, driver allocations, trip dispatching, fuel consumption, maintenance work orders, and financial tracking—all backed by multi-tenant isolation, role-based access control (RBAC), and bi-directional Atlassian Jira integration.
+
+---
 
 ## 🌟 Key Features
 
-- **Fleet Management**: Track vehicle status, details, capacity, and cost.
-- **Driver Management**: Monitor driver statuses, safety scores, licenses, and contact information.
-- **Trip Tracking**: Create, dispatch, and track trips from source to destination with real-time status updates.
-- **Fuel & Expense Tracking**: Log fuel consumption and trip-related expenses (maintenance, toll, others) to calculate operating costs.
-- **Maintenance Records**: Schedule and track vehicle maintenance (routine, oil changes, brake service, etc.).
-- **Role-Based Access Control (RBAC)**: Secure access with distinct roles (`ADMIN`, `DRIVER`, `FLEET_MANAGER`, `DISPATCHER`, `SAFETY_OFFICER`, `FINANCIAL_ANALYST`) and granular permissions.
-- **Company Multi-tenancy**: Designed to support organizational structures and company-specific configurations.
+- **Fleet & Vehicle Inventory**: Track vehicle status (`Available`, `On_Trip`, `In_Shop`, `Retired`), capacity, odometer readings, and acquisition cost.
+- **Driver Management**: Monitor driver roster, safety scores, licensing details with expiry alerts, and trip completion rates.
+- **Trip Dispatching & Live Tracking**: Interactive Leaflet maps for route selection (`src_lat`, `src_lng`, `dest_lat`, `dest_lng`), payload capacity enforcement, and a real-time dispatch Kanban board.
+- **Fuel & Expense Tracking**: Log fuel consumption per vehicle and allocate trip-linked operational expenses (tolls, maintenance, misc).
+- **Maintenance & Work Orders**: Schedule services (Routine Service, Oil Change, Tire Replacement, Brake Service, Engine Repair), automatically transition vehicle status to `In_Shop`, and sync work orders directly with Atlassian Jira.
+- **Atlassian Jira Integration**: Bi-directional integration creating Jira issues on maintenance logs, with an inbound webhook listener (`POST /api/v1/integrations/jira/webhook`) that marks work orders complete and returns vehicles to `Available` upon ticket resolution.
+- **Atlassian Remote MCP v2 Support**: Integrated Model Context Protocol (`https://mcp.atlassian.com/v2/mcp`) for AI coding agents with OAuth 2.1 authentication.
+- **Role-Based Access Control (RBAC)**: Enforce granular access across resources (`FLEET`, `DRIVERS`, `TRIPS`, `FUEL_EXPENSE`, `ANALYTICS`) for roles: `ADMIN`, `FLEET_MANAGER`, `DISPATCHER`, `DRIVER`, `SAFETY_OFFICER`, and `FINANCIAL_ANALYST`.
+- **Multi-Tenancy & Settings**: Organization isolation by company ID with configurable currency (`INR`, `USD`, `EUR`, etc.) and distance measurement units.
+- **Observability & Metrics**: Native Prometheus metrics (`/metrics`) and custom Grafana dashboard tracking latency, throughput, error rates, and system resources.
 
 ---
 
 ## 🏗 System Architecture
 
-The application is built on a modern stack featuring a Next.js frontend and an Express.js backend powered by Prisma and PostgreSQL.
+TransitOps is built with a Next.js frontend and an Express.js backend powered by Prisma ORM and PostgreSQL.
 
 ```mermaid
 graph TD
-    Client[Web Browser] -->|HTTP / REST API| NextJS[Next.js Frontend]
-    NextJS -->|API Requests| Express[Express.js API Backend]
-    Express -->|Prisma Client Queries| Prisma[Prisma ORM]
-    Prisma -->|SQL Queries| Postgres[(PostgreSQL Database)]
+    Client[Web Browser / AI Agent] -->|HTTPS / UI| NextJS[Next.js App Router Frontend]
+    NextJS -->|REST API Requests| Express[Express.js API Backend]
+    Express -->|Prisma Client| Postgres[(PostgreSQL Database)]
+    Express -->|REST API v3| Jira[Atlassian Jira Cloud]
+    Jira -->|Webhooks / Status Sync| Express
+    Express -->|Prometheus Metrics| Prom[Prometheus Server]
+    Prom -->|Dashboards| Grafana[Grafana]
 
-    subgraph Frontend [Frontend - Next.js App Router]
+    subgraph Frontend [Frontend - Next.js]
         NextJS
         Tailwind[Tailwind CSS]
         Lucide[Lucide Icons]
+        Leaflet[Leaflet Maps]
     end
 
     subgraph Backend [Backend - Express API]
         Express
-        Auth[Auth Middleware JWT]
-        RBAC[RBAC / Permissions Middleware]
-        Controllers[Controllers & Services]
+        Auth[Auth Middleware & JWT]
+        RBAC[RBAC & Permissions Guard]
+        JiraService[Jira Service & Webhook]
+        Metrics[Prometheus Middleware]
     end
 ```
 
@@ -43,8 +53,7 @@ graph TD
 
 ## 🗄 Database Schema (ERD)
 
-The relational database is carefully structured to handle complex fleet operations. 
-[View the detailed Database Design Document](https://drive.google.com/file/d/1b_byAQeu0nbLQVDn76YKu6tdoJpmf7vp/view?usp=sharing)
+The relational database is structured for high operational consistency and transactional integrity.
 
 ```mermaid
 erDiagram
@@ -90,12 +99,25 @@ erDiagram
         string vehicle_model
         string type
         float load_capacity
-        string status "Enum: Available, On_Trip, etc."
+        string status "Enum: Available, On_Trip, In_Shop, Retired"
+    }
+
+    MAINTENANCE {
+        int id PK
+        string reg_no FK
+        string service_type
+        float cost
+        datetime date
+        string status
+        string jira_issue_key
+        string jira_issue_id
+        string jira_issue_url
+        string jira_status
     }
 
     DRIVER {
         string license_no PK
-        int driver_id FK "References Users"
+        int driver_id FK
         string status
         float safety_score
     }
@@ -106,7 +128,8 @@ erDiagram
         int driver_id FK
         string src
         string dest
-        string trip_status "Enum: Draft, Dispatched, etc."
+        float cargo_weight
+        string trip_status "Enum: Draft, Dispatched, Completed, Cancelled"
     }
 ```
 
@@ -115,17 +138,18 @@ erDiagram
 ## 🛠 Tech Stack
 
 ### Frontend
-- **Framework**: [Next.js](https://nextjs.org/) (App Router)
-- **Library**: [React 19](https://react.dev/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
+- **Framework**: [Next.js](https://nextjs.org/) (App Router, React 19)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons & UI**: [Lucide React](https://lucide.dev/)
+- **Maps**: [Leaflet](https://leafletjs.com/) & [React-Leaflet](https://react-leaflet.js.org/)
 
 ### Backend
+- **Runtime & Language**: Node.js (v22), TypeScript
 - **Framework**: [Express.js](https://expressjs.com/)
-- **Language**: TypeScript
-- **ORM**: [Prisma](https://www.prisma.io/)
-- **Database**: PostgreSQL
-- **Security**: JWT Authentication, Custom Role & Permission Middleware
+- **Database & ORM**: PostgreSQL, [Prisma ORM](https://www.prisma.io/)
+- **Authentication**: JWT, bcryptjs, Nodemailer (Mailtrap SMTP)
+- **Integrations**: Atlassian Jira Cloud REST API, Model Context Protocol (MCP)
+- **Metrics**: `prom-client` (Prometheus)
 
 ---
 
@@ -133,86 +157,91 @@ erDiagram
 
 ### Prerequisites
 - Node.js (v20+)
-- pnpm (recommended) or npm/yarn
+- pnpm (v9+)
 - PostgreSQL Database
-- Docker (optional, for running the database)
+- Docker & Docker Compose (optional)
 
-### Backend Setup
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-3. Set up your `.env` file (copy from `.env.example` if available) and ensure `DATABASE_URL` is set.
-4. Run Prisma migrations:
-   ```bash
-   pnpm dlx prisma migrate dev
-   ```
-5. Start the development server:
-   ```bash
-   pnpm dev
-   ```
+### 1. Backend Setup
 
-### Frontend Setup
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-3. Start the Next.js development server:
-   ```bash
-   pnpm dev
-   ```
+```bash
+cd backend
 
-The frontend will be available at `http://localhost:3000` and the API backend typically at `http://localhost:5000` (depending on your `.env` configuration).
+# Install dependencies
+pnpm install
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your PostgreSQL credentials, JWT secret, and optional Jira settings
+
+# Run database migrations
+pnpm dlx prisma migrate dev
+
+# Seed database with sample fleet, roles, and users
+pnpm dlx prisma db seed
+
+# Start development server
+pnpm dev
+```
+The API server runs by default at `http://localhost:3000`. Swagger documentation is available at `http://localhost:3000/api-docs`.
+
+### 2. Frontend Setup
+
+```bash
+cd frontend
+
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+```
+The frontend web application runs at `http://localhost:3000` (or `http://localhost:3001` if running alongside the backend on port 3000).
 
 ---
 
-## 🚀 DevOps, Kubernetes & Monitoring Setup
+## 🔗 Jira & Atlassian MCP Integration
 
-This repository includes a 100% reproducible local Kubernetes deployment powered by **Prometheus**, **Grafana**, and **GitHub Actions CI**.
+### Jira Work Order Synchronization
+* When a maintenance service is logged in TransitOps, a Jira task is created in your Atlassian project.
+* The maintenance record stores `jira_issue_key`, `jira_issue_id`, `jira_issue_url`, and `jira_status`.
+* The frontend displays direct links and live Jira status badges.
+* **Webhook Endpoint**: `POST /api/v1/integrations/jira/webhook`
+  * When a ticket is marked as `Done` / `Resolved` in Jira, the webhook listener marks the maintenance order as `Completed` and automatically resets the vehicle's status to `Available`.
 
-### Step-by-Step Deployment Instructions
+### Atlassian Remote MCP v2 Setup
+TransitOps supports the official Atlassian MCP Server for AI assistants:
+* **Server URL**: `https://mcp.atlassian.com/v2/mcp`
+* **Transport**: Streamable HTTP
+* **Auth**: OAuth 2.1 (or Personal API Token)
+* Configured in [`.agents/mcp_config.json`](./.agents/mcp_config.json).
 
-#### 1. Build Docker Images
+---
+
+## 🐳 DevOps, Kubernetes & Monitoring
+
+### Docker Compose
+Run the entire stack locally with Docker Compose:
 ```bash
-# Build backend container image
-docker build -t odoo-backend:latest ./backend
-
-# Build frontend container image
-docker build -t odoo-frontend:latest ./frontend
-
-# (If using Minikube, load images into the cluster):
-# minikube image load odoo-backend:latest
-# minikube image load odoo-frontend:latest
+docker-compose up --build
 ```
 
-#### 2. Apply Kubernetes Manifests (`/k8s`)
+### Kubernetes Deployment (`/k8s`)
+A complete, production-ready Kubernetes configuration is provided in the [`k8s/`](./k8s) directory:
+
 ```bash
-# Create the 'odoo-app' isolated namespace
+# 1. Create the application namespace
 kubectl apply -f k8s/namespace.yaml
 
-# Deploy PostgreSQL database (PVC, Deployment, Service)
+# 2. Deploy PostgreSQL database (PVC, Deployment, Service)
 kubectl apply -f k8s/postgres.yaml
 
-# Deploy Express Backend API & Next.js Frontend
+# 3. Deploy Express Backend API & Next.js Frontend
 kubectl apply -f k8s/backend.yaml
 kubectl apply -f k8s/frontend.yaml
-```
 
-#### 3. Deploy Prometheus & Grafana Stack via Helm
-```bash
-# Add Prometheus Helm repository
+# 4. Deploy Prometheus & Grafana Monitoring Stack
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-
-# Install kube-prometheus-stack in 'monitoring' namespace
 helm install prometheus-stack prometheus-community/kube-prometheus-stack \
   --namespace monitoring \
   --create-namespace \
@@ -223,22 +252,31 @@ helm install prometheus-stack prometheus-community/kube-prometheus-stack \
 kubectl apply -f k8s/servicemonitor.yaml
 ```
 
-#### 4. Access Services & Grafana Dashboard
-* **Backend API:** `http://localhost:30000` (Health: `/health`, Metrics: `/metrics`)
-* **Frontend Web App:** `http://localhost:30001`
-* **Grafana Dashboard:** `http://localhost:3002` (User: `admin` | Password: `admin`)
+#### Access Endpoints
+* **Backend API**: `http://localhost:30000` (`/health`, `/metrics`)
+* **Frontend Web App**: `http://localhost:30001`
+* **Grafana Dashboard**: `http://localhost:3002` (Credentials: `admin` / `admin`)
   ```bash
-  # Port forward Grafana service to access dashboard locally
   kubectl port-forward svc/prometheus-stack-grafana 3002:80 -n monitoring
   ```
 
-### Kubernetes Architecture & Manifest Files (`/k8s`)
-* [`k8s/namespace.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/namespace.yaml): Creates `odoo-app` isolated namespace.
-* [`k8s/postgres.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/postgres.yaml): PostgreSQL Storage (PVC), Deployment, and Service.
-* [`k8s/backend.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/backend.yaml): Express API deployment with Prometheus scrape annotations + NodePort Service (:30000).
-* [`k8s/frontend.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/frontend.yaml): Next.js web app deployment + NodePort Service (:30001).
-* [`k8s/servicemonitor.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/servicemonitor.yaml): Prometheus Operator target configuration.
-* [`k8s/grafana-dashboard.json`](file:///c:/Users/yomes/odoo-hackathon/k8s/grafana-dashboard.json): Pre-configured Grafana dashboard JSON (HTTP RPS, Error Rate, Latency, Memory).
+#### Manifest References
+* [`k8s/namespace.yaml`](./k8s/namespace.yaml): Creates the isolated `odoo-app` namespace.
+* [`k8s/postgres.yaml`](./k8s/postgres.yaml): PostgreSQL Storage (PVC), Deployment, and Service.
+* [`k8s/backend.yaml`](./k8s/backend.yaml): Express API deployment with Prometheus scrape annotations and NodePort Service.
+* [`k8s/frontend.yaml`](./k8s/frontend.yaml): Next.js web application deployment and Service.
+* [`k8s/servicemonitor.yaml`](./k8s/servicemonitor.yaml): Prometheus Operator scraping configuration.
+* [`k8s/grafana-dashboard.json`](./k8s/grafana-dashboard.json): Grafana dashboard (HTTP RPS, Error Rates, Request Latencies, Memory).
+
+---
+
+## 🤖 Continuous Integration (GitHub Actions)
+
+The repository includes automated CI in [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) that verifies:
+1. **Backend CI**: Dependencies installation, Prisma Client generation, and TypeScript typechecking (`tsc --noEmit`).
+2. **Frontend CI**: Next.js production compilation and linting (`pnpm build`).
+3. **Docker Build CI**: Multi-stage Docker container builds for both backend and frontend images.
+4. **Kubernetes Validation CI**: Automated syntax and schema verification across all Kubernetes and monitoring YAML manifests.
 
 ---
 
@@ -248,6 +286,3 @@ kubectl apply -f k8s/servicemonitor.yaml
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-#   s t u d i o u s - c a r n i v a l  
- 
