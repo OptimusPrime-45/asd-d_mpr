@@ -76,10 +76,12 @@ __pycache__/
 develop-eggs/
 downloads/
 eggs/
-.eggs/
-lib/
+# Python build artifacts
+# lib/
 lib64/
 parts/
+!frontend/lib/
+
 sdist/
 var/
 wheels/
