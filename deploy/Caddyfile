@@ -1,0 +1,29 @@
+:80 {
+    # Encode responses with gzip/zstd
+    encode zstd gzip
+
+    # Backend API endpoints
+    handle /api/* {
+        reverse_proxy backend:3000
+    }
+
+    # Backend Health Check
+    handle /health {
+        reverse_proxy backend:3000
+    }
+
+    # Prometheus Metrics
+    handle /metrics {
+        reverse_proxy backend:3000
+    }
+
+    # Swagger Documentation
+    handle /docs* {
+        reverse_proxy backend:3000
+    }
+
+    # Frontend Next.js Web Application
+    handle /* {
+        reverse_proxy frontend:3000
+    }
+}
