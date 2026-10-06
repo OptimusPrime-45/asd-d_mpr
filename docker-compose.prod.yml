@@ -36,7 +36,7 @@ services:
       PORT: 3000
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL:-postgresql://admin:password@postgres:5432/logistics_db?schema=public}
-      JWT_SECRET: ${JWT_SECRET:-secret}
+      JWT_SECRET: ${JWT_SECRET:-super-secure-production-jwt-secret-key-32chars}
       JIRA_HOST: ${JIRA_HOST:-}
       JIRA_EMAIL: ${JIRA_EMAIL:-}
       JIRA_API_TOKEN: ${JIRA_API_TOKEN:-}
