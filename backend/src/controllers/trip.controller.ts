@@ -10,7 +10,7 @@ export const getTrips = async (req: Request, res: Response, next: NextFunction) 
     const companyId = (req as any).user?.companyId;
 
     const trips = await prisma.trip.findMany({
-      where: companyId ? { vehicle: { company_id: companyId } } : undefined,
+      ...(companyId ? { where: { vehicle: { company_id: companyId } } } : {}),
       include: {
         vehicle: true,
         driver: { include: { user: true } },
