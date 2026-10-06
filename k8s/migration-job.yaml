@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: odoo-db-migrate
+  namespace: odoo-app
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: odoo-db-migrate
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: prisma-migrate
+          image: odoo-backend:latest
+          command: ["npx", "prisma", "migrate", "deploy"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: odoo-secrets
+                  key: DATABASE_URL
+                  optional: true
+            - name: DATABASE_URL_FALLBACK
+              value: "postgresql://admin:password@postgres:5432/logistics_db?schema=public"
