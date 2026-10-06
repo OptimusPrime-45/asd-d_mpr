@@ -1,6 +1,7 @@
 import { MaintenanceRepository } from '../repositories/maintenance.repository.js';
 import { VehicleRepository } from '../repositories/vehicle.repository.js';
 import { NotFoundError, ForbiddenError } from '../errors/index.js';
+import { jiraService } from './jira.service.js';
 import type { Maintenance, ServiceType } from '@prisma/client';
 
 const maintenanceRepository = new MaintenanceRepository();
@@ -26,12 +27,25 @@ export class MaintenanceService {
       throw new ForbiddenError('You do not have permission to access this vehicle');
     }
 
+    // Generate Jira work order issue
+    const jiraIssue = await jiraService.createMaintenanceIssue({
+      regNo: data.reg_no,
+      vehicleModel: vehicle.vehicle_model,
+      serviceType: data.service_type,
+      cost: data.cost,
+      date: data.date,
+    });
+
     return maintenanceRepository.create({
       reg_no: data.reg_no,
       service_type: data.service_type,
       cost: data.cost,
       date: new Date(data.date),
       status: data.status,
+      jira_issue_key: jiraIssue.key,
+      jira_issue_id: jiraIssue.id,
+      jira_issue_url: jiraIssue.url,
+      jira_status: jiraIssue.status,
     });
   }
 

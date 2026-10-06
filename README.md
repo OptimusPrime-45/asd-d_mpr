@@ -174,9 +174,80 @@ The frontend will be available at `http://localhost:3000` and the API backend ty
 
 ---
 
+## 🚀 DevOps, Kubernetes & Monitoring Setup
+
+This repository includes a 100% reproducible local Kubernetes deployment powered by **Prometheus**, **Grafana**, and **GitHub Actions CI**.
+
+### Step-by-Step Deployment Instructions
+
+#### 1. Build Docker Images
+```bash
+# Build backend container image
+docker build -t odoo-backend:latest ./backend
+
+# Build frontend container image
+docker build -t odoo-frontend:latest ./frontend
+
+# (If using Minikube, load images into the cluster):
+# minikube image load odoo-backend:latest
+# minikube image load odoo-frontend:latest
+```
+
+#### 2. Apply Kubernetes Manifests (`/k8s`)
+```bash
+# Create the 'odoo-app' isolated namespace
+kubectl apply -f k8s/namespace.yaml
+
+# Deploy PostgreSQL database (PVC, Deployment, Service)
+kubectl apply -f k8s/postgres.yaml
+
+# Deploy Express Backend API & Next.js Frontend
+kubectl apply -f k8s/backend.yaml
+kubectl apply -f k8s/frontend.yaml
+```
+
+#### 3. Deploy Prometheus & Grafana Stack via Helm
+```bash
+# Add Prometheus Helm repository
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+# Install kube-prometheus-stack in 'monitoring' namespace
+helm install prometheus-stack prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace \
+  --set grafana.adminPassword="admin" \
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+
+# Apply ServiceMonitor target for backend metrics
+kubectl apply -f k8s/servicemonitor.yaml
+```
+
+#### 4. Access Services & Grafana Dashboard
+* **Backend API:** `http://localhost:30000` (Health: `/health`, Metrics: `/metrics`)
+* **Frontend Web App:** `http://localhost:30001`
+* **Grafana Dashboard:** `http://localhost:3002` (User: `admin` | Password: `admin`)
+  ```bash
+  # Port forward Grafana service to access dashboard locally
+  kubectl port-forward svc/prometheus-stack-grafana 3002:80 -n monitoring
+  ```
+
+### Kubernetes Architecture & Manifest Files (`/k8s`)
+* [`k8s/namespace.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/namespace.yaml): Creates `odoo-app` isolated namespace.
+* [`k8s/postgres.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/postgres.yaml): PostgreSQL Storage (PVC), Deployment, and Service.
+* [`k8s/backend.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/backend.yaml): Express API deployment with Prometheus scrape annotations + NodePort Service (:30000).
+* [`k8s/frontend.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/frontend.yaml): Next.js web app deployment + NodePort Service (:30001).
+* [`k8s/servicemonitor.yaml`](file:///c:/Users/yomes/odoo-hackathon/k8s/servicemonitor.yaml): Prometheus Operator target configuration.
+* [`k8s/grafana-dashboard.json`](file:///c:/Users/yomes/odoo-hackathon/k8s/grafana-dashboard.json): Pre-configured Grafana dashboard JSON (HTTP RPS, Error Rate, Latency, Memory).
+
+---
+
 ## 🤝 Contributing
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+#   s t u d i o u s - c a r n i v a l  
+ 

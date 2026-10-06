@@ -36,4 +36,10 @@ export class MaintenanceRepository {
       data,
     });
   }
+
+  async findByJiraIssueKey(jira_issue_key: string): Promise<Maintenance | null> {
+    return prisma.maintenance.findFirst({
+      where: { jira_issue_key },
+    });
+  }
 }

@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -77,9 +78,13 @@ model Maintenance {
   reg_no       String
   vehicle      Vehicles    @relation(fields: [reg_no], references: [reg_no])
   service_type ServiceType
-  cost         Float
-  date         DateTime
-  status       String
+  cost           Float
+  date           DateTime
+  status         String
+  jira_issue_key String?
+  jira_issue_id  String?
+  jira_issue_url String?
+  jira_status    String?
 }
 
 model Driver {

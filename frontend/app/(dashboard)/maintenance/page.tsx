@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Wrench, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Wrench, ArrowRight, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface Vehicle {
   reg_no: string;
@@ -231,12 +231,50 @@ export default function MaintenancePage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Log Service Form */}
         <div className="lg:col-span-7 bg-surface rounded-xl border border-border p-6 shadow-sm">
-          <div className="flex items-center space-x-3 mb-6">
-            <Wrench className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold text-primary-text">Log Service Record</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <Wrench className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold text-primary-text">Log Service Record</h2>
+            </div>
+            {activeMaintenance?.jira_issue_key && (
+              <a
+                href={activeMaintenance.jira_issue_url || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors shadow-2xs"
+                title="View work order in Atlassian Jira"
+              >
+                <span>Jira: {activeMaintenance.jira_issue_key}</span>
+                <span className="text-[10px] bg-blue-200 text-blue-800 px-1.5 py-0.2 rounded font-semibold">
+                  {activeMaintenance.jira_status || 'Open'}
+                </span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {activeMaintenance && (
+              <div className="rounded-lg bg-blue-50/70 border border-blue-200 p-3.5 text-xs text-blue-900 flex items-start justify-between">
+                <div>
+                  <span className="font-semibold block text-sm mb-0.5 text-blue-950">Active Maintenance Order</span>
+                  <p className="text-blue-800">
+                    Vehicle is currently In Shop for <strong>{activeMaintenance.service_type?.replace(/_/g, ' ')}</strong>.
+                  </p>
+                </div>
+                {activeMaintenance.jira_issue_key && (
+                  <a
+                    href={activeMaintenance.jira_issue_url || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-1 font-semibold text-blue-700 hover:underline shrink-0 ml-2"
+                  >
+                    <span>View Ticket</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            )}
             {error && (
               <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 flex items-start space-x-2">
                 <AlertCircle className="h-5 w-5 shrink-0" />

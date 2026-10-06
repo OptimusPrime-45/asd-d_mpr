@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "atlassian": {
+      "disabled": false,
+      "url": "https://mcp.atlassian.com/v2/mcp",
+      "serverUrl": "https://mcp.atlassian.com/v2/mcp"
+    }
+  }
+}

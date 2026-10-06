@@ -19,6 +19,11 @@ const envSchema = z.object({
   SMTP_PASS: z.string().default(''),
   MAIL_FROM: z.string().default('FleetOps <no-reply@fleetops.com>'),
   APP_URL: z.string().url().default('http://localhost:3000'),
+  JIRA_HOST: z.string().optional().default(''),
+  JIRA_EMAIL: z.string().optional().default(''),
+  JIRA_API_TOKEN: z.string().optional().default(''),
+  JIRA_PROJECT_KEY: z.string().optional().default('FLEET'),
+  JIRA_WEBHOOK_SECRET: z.string().optional().default(''),
 });
 
 const _env = envSchema.safeParse(process.env);
