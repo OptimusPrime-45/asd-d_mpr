@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "FleetOps | Login",
-  description: "Smart Fleet Operations Platform",
+  title: "TransitOps — Fleet & Logistics Management System",
+  description: "TransitOps Smart Fleet & Logistics Operations Platform",
 };
 
 export default function RootLayout({

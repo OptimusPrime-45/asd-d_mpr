@@ -21,10 +21,10 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         {/* Text Content */}
         <div className="relative z-20 p-12 lg:p-16">
           <h1 className="text-[36px] font-semibold text-white mb-4">
-            FleetOps
+            TransitOps
           </h1>
           <p className="text-[24px] font-medium text-white mb-2 max-w-md leading-tight">
-            Smart Fleet Operations Platform
+            Fleet & Logistics Management System
           </p>
           <p className="text-[16px] text-white/80 max-w-sm">
             Built for fleet managers, dispatchers and operations teams.

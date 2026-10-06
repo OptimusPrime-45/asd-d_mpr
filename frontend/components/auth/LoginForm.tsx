@@ -53,10 +53,10 @@ export function LoginForm() {
       <div className="flex flex-col space-y-2">
         <div className="flex items-center space-x-2 mb-6">
           <Hexagon className="h-6 w-6 text-primary" strokeWidth={2.5} />
-          <span className="text-xl font-semibold text-primary-text tracking-tight">FleetOps</span>
+          <span className="text-xl font-semibold text-primary-text tracking-tight">TransitOps</span>
         </div>
         <h2 className="text-[24px] font-semibold tracking-tight text-primary-text">Welcome back</h2>
-        <p className="text-[16px] text-secondary-text">Sign in to continue to FleetOps</p>
+        <p className="text-[16px] text-secondary-text">Sign in to continue to TransitOps</p>
       </div>
 
       {/* Form */}
@@ -194,7 +194,7 @@ export function LoginForm() {
 
       {/* Footer */}
       <p className="text-center text-[14px] text-secondary-text pt-4">
-        © 2026 FleetOps. All rights reserved.
+        © 2026 TransitOps. All rights reserved.
       </p>
     </div>
   );
