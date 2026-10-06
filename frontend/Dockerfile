@@ -13,6 +13,9 @@ COPY . .
 EXPOSE 3000
 
 ENV PORT=3000
-ENV NODE_ENV=development
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-CMD ["pnpm", "dev"]
+RUN pnpm build
+
+CMD ["pnpm", "start"]
