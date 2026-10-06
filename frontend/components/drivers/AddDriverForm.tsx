@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getApiUrl } from "@/lib/api";
 import { Driver } from "./DriverTable";
 
 interface AddDriverFormProps {
@@ -35,7 +36,7 @@ export function AddDriverForm({ onSuccess, onCancel }: AddDriverFormProps) {
     setIsSubmitting(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      const API_URL = getApiUrl();
       
       // Assume safety score is 100 initially and expiry is +5 years
       const futureDate = new Date();

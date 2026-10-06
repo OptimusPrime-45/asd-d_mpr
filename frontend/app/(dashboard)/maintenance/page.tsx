@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl } from '@/lib/api';
 import { Wrench, ArrowRight, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface Vehicle {
@@ -35,7 +36,7 @@ export default function MaintenancePage() {
 
     const fetchVehicles = async () => {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const API_URL = getApiUrl();
         const res = await fetch(`${API_URL}/api/v1/vehicles`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -78,7 +79,7 @@ export default function MaintenancePage() {
       const selectedVehicle = vehicles.find((v) => v.reg_no === formData.reg_no);
       if (selectedVehicle?.status === 'In_Shop' || selectedVehicle?.status === 'In Shop') {
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+          const API_URL = getApiUrl();
           const res = await fetch(`${API_URL}/api/v1/maintenances/active/${formData.reg_no}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -125,7 +126,7 @@ export default function MaintenancePage() {
     setIsSubmitting(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const API_URL = getApiUrl();
       const isCurrentlyInShop = !!activeMaintenance;
 
       if (isCurrentlyInShop) {

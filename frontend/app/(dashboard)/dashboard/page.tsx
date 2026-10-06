@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl } from '@/lib/api';
 import { Search, ChevronDown, Loader2, RefreshCw } from 'lucide-react';
 
 interface KPIResponse {
@@ -60,7 +61,7 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const API_URL = getApiUrl();
     // cast to any to get companyId since auth context user type is extended at runtime
     const companyId = (user as any).companyId || 1;
 

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getApiUrl } from '@/lib/api';
 
 export interface User {
   id: number;
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const API_URL = getApiUrl();
 
   const fetchPermissions = async (authToken: string, userRole: string) => {
     if (userRole === 'ADMIN') {

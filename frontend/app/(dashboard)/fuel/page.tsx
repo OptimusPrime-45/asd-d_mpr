@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Modal } from '@/components/ui/Modal';
 import { Plus, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { RouteGuard } from '@/components/layout/RouteGuard';
+import { getApiUrl } from '@/lib/api';
 
 interface FuelLog {
   id: number;
@@ -43,7 +44,7 @@ interface Trip {
 
 export default function FuelExpensesPage() {
   const { user, token } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const API_URL = getApiUrl();
 
   // Data lists
   const [fuelLogs, setFuelLogs] = useState<FuelLog[]>([]);

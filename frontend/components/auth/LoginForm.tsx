@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Hexagon, ChevronDown, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl } from '@/lib/api';
 
 export function LoginForm() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const API_URL = getApiUrl();
       const response = await fetch(`${API_URL}/api/v1/auth/login`, {
         method: 'POST',
         headers: {

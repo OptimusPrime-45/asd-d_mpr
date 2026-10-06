@@ -7,10 +7,11 @@ import { CreateTripForm } from '@/components/trips/CreateTripForm';
 import { LiveBoard, Trip } from '@/components/trips/LiveBoard';
 import { RouteGuard } from '@/components/layout/RouteGuard';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl } from '@/lib/api';
 
 export default function TripDispatcherPage() {
   const { user, token, logout } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const API_URL = getApiUrl();
 
   // Form state
   const [source, setSource] = useState('');

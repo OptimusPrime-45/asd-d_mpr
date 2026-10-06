@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl } from '@/lib/api';
 import { Loader2, CheckCircle2, AlertCircle, ShieldAlert, ArrowLeft } from 'lucide-react';
 
 interface PermissionFromAPI {
@@ -38,7 +39,7 @@ const RESOURCE_DISPLAY_NAMES: Record<string, string> = {
 
 export default function SettingsPage() {
   const { user, token, isLoading } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const API_URL = getApiUrl();
 
   // General Settings States
   const [depotName, setDepotName] = useState('');

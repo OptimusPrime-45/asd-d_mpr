@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getApiUrl } from "@/lib/api";
 import { Vehicle } from "./VehicleTable";
 
 interface AddVehicleFormProps {
@@ -35,7 +36,7 @@ export function AddVehicleForm({ onSuccess, onCancel }: AddVehicleFormProps) {
     setIsSubmitting(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      const API_URL = getApiUrl();
       
       const payload = {
         ...formData,

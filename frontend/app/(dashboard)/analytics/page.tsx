@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl } from '@/lib/api';
 import { Fuel, Percent, TrendingUp, DollarSign } from 'lucide-react';
 
 interface CostliestVehicle {
@@ -36,7 +37,7 @@ export default function AnalyticsPage() {
 
     const fetchAnalytics = async () => {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const API_URL = getApiUrl();
         const companyId = (user as any).companyId || 1;
 
         const res = await fetch(`${API_URL}/api/v1/analytics/${companyId}`, {

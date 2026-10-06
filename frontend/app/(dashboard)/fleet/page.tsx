@@ -7,6 +7,7 @@ import { AddVehicleForm } from '@/components/vehicles/AddVehicleForm';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/contexts/AuthContext';
 import { RouteGuard } from '@/components/layout/RouteGuard';
+import { getApiUrl } from '@/lib/api';
 
 export default function FleetPage() {
   const { token, logout } = useAuth();
@@ -25,7 +26,7 @@ export default function FleetPage() {
 
     const fetchVehicles = async () => {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const API_URL = getApiUrl();
         const res = await fetch(`${API_URL}/api/v1/vehicles`, {
           headers: {
             Authorization: `Bearer ${token}`,
