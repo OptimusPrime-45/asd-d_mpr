@@ -174,10 +174,10 @@ cp .env.example .env
 # Edit .env with your PostgreSQL credentials, JWT secret, and optional Jira settings
 
 # Run database migrations
-pnpm dlx prisma migrate dev
+pnpm exec prisma migrate dev
 
 # Seed database with sample fleet, roles, and users
-pnpm dlx prisma db seed
+pnpm exec prisma db seed
 
 # Start development server
 pnpm dev
