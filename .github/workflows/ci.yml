@@ -64,9 +64,6 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Configure pnpm build approvals
-        run: pnpm config set strict-dep-builds false
-
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
 
