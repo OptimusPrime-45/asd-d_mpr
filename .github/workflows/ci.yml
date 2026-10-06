@@ -95,20 +95,27 @@ jobs:
           push: false
           tags: transitops-frontend:test
 
-  k8s-validate:
-    name: Validate Kubernetes Manifests
+  compose-validate:
+    name: Validate Docker Compose & Monitoring Configs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate YAML Manifests
+      - name: Validate Docker Compose Files
+        run: |
+          docker compose -f docker-compose.yml config > /dev/null
+          docker compose -f docker-compose.prod.yml config > /dev/null
+          echo "Docker Compose manifests are valid."
+
+      - name: Validate Monitoring YAMLs
         run: |
           python3 -c "
           import glob, yaml
-          manifests = glob.glob('k8s/*.yaml') + glob.glob('monitoring/**/*.yml', recursive=True)
+          manifests = glob.glob('monitoring/**/*.yml', recursive=True)
           for f in manifests:
               with open(f, 'r') as fp:
                   list(yaml.safe_load_all(fp))
-          print(f'Successfully validated {len(manifests)} manifests.')
+          print(f'Successfully validated {len(manifests)} monitoring configs.')
           "
+

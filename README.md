@@ -217,66 +217,44 @@ TransitOps supports the official Atlassian MCP Server for AI assistants:
 
 ---
 
-## 🐳 DevOps, Kubernetes & Monitoring
+## 🐳 DevOps, Docker & Monitoring
 
-### Docker Compose
+### Local Development (Docker Compose)
 Run the entire stack locally with Docker Compose:
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
+* **Frontend**: `http://localhost:3001`
+* **Backend API**: `http://localhost:3000` (`/health`, `/metrics`, `/docs`)
+* **Grafana Dashboard**: `http://localhost:3002` (Credentials: `admin` / `admin`)
+* **Prometheus**: `http://localhost:9090`
 
-### Kubernetes Deployment (`/k8s`)
-A complete, production-ready Kubernetes configuration is provided in the [`k8s/`](./k8s) directory:
+### Production Deployment (AWS EC2 + Caddy Reverse Proxy)
+For production deployments, the stack is orchestrated via [`docker-compose.prod.yml`](./docker-compose.prod.yml) fronted by Caddy:
 
 ```bash
-# 1. Create the application namespace
-kubectl apply -f k8s/namespace.yaml
-
-# 2. Deploy PostgreSQL database (PVC, Deployment, Service)
-kubectl apply -f k8s/postgres.yaml
-
-# 3. Deploy Express Backend API & Next.js Frontend
-kubectl apply -f k8s/backend.yaml
-kubectl apply -f k8s/frontend.yaml
-
-# 4. Deploy Prometheus & Grafana Monitoring Stack
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-helm install prometheus-stack prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-  --create-namespace \
-  --set grafana.adminPassword="admin" \
-  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
-
-# Apply ServiceMonitor target for backend metrics
-kubectl apply -f k8s/servicemonitor.yaml
+# Automated 1-click EC2 provisioner (Free-Tier eligible)
+./aws/provision-ec2.sh
 ```
 
-#### Access Endpoints
-* **Backend API**: `http://localhost:30000` (`/health`, `/metrics`)
-* **Frontend Web App**: `http://localhost:30001`
-* **Grafana Dashboard**: `http://localhost:3002` (Credentials: `admin` / `admin`)
-  ```bash
-  kubectl port-forward svc/prometheus-stack-grafana 3002:80 -n monitoring
-  ```
-
-#### Manifest References
-* [`k8s/namespace.yaml`](./k8s/namespace.yaml): Creates the isolated `odoo-app` namespace.
-* [`k8s/postgres.yaml`](./k8s/postgres.yaml): PostgreSQL Storage (PVC), Deployment, and Service.
-* [`k8s/backend.yaml`](./k8s/backend.yaml): Express API deployment with Prometheus scrape annotations and NodePort Service.
-* [`k8s/frontend.yaml`](./k8s/frontend.yaml): Next.js web application deployment and Service.
-* [`k8s/servicemonitor.yaml`](./k8s/servicemonitor.yaml): Prometheus Operator scraping configuration.
-* [`k8s/grafana-dashboard.json`](./k8s/grafana-dashboard.json): Grafana dashboard (HTTP RPS, Error Rates, Request Latencies, Memory).
+#### Production Features:
+* **Caddy Reverse Proxy**: Serves all traffic on standard HTTP/HTTPS (`80` / `443`), routes `/api/*` to the Express backend and `/*` to Next.js frontend, avoiding CORS issues.
+* **Persistent PostgreSQL**: Database mounted to persistent volume with automated migrations on boot.
+* **Continuous Deployment**: Automated GitHub Actions workflow in [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) deploys updates to the EC2 server upon push to `main`.
 
 ---
 
-## 🤖 Continuous Integration (GitHub Actions)
+## 🤖 Continuous Integration & Deployment (GitHub Actions)
 
-The repository includes automated CI in [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) that verifies:
-1. **Backend CI**: Dependencies installation, Prisma Client generation, and TypeScript typechecking (`tsc --noEmit`).
-2. **Frontend CI**: Next.js production compilation and linting (`pnpm build`).
-3. **Docker Build CI**: Multi-stage Docker container builds for both backend and frontend images.
-4. **Kubernetes Validation CI**: Automated syntax and schema verification across all Kubernetes and monitoring YAML manifests.
+The repository includes automated CI/CD workflows:
+1. **[`.github/workflows/ci.yml`](./.github/workflows/ci.yml)**:
+   * **Backend CI**: Dependencies, Prisma Client generation, TypeScript typechecking (`tsc --noEmit`).
+   * **Frontend CI**: Next.js production build (`pnpm build`).
+   * **Docker Build CI**: Multi-stage container builds for both backend and frontend.
+   * **Manifest Validation**: Syntactic verification of Docker Compose & Prometheus configurations.
+2. **[`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)**:
+   * **Continuous Deployment**: Automatically deploys commits on `main` directly to the live AWS EC2 server over SSH.
+
 
 ---
 
