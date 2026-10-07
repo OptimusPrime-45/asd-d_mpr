@@ -3,7 +3,6 @@
 TransitOps is a comprehensive, full-stack logistics and fleet management platform designed to streamline vehicle operations, driver allocations, trip dispatching, fuel consumption, maintenance work orders, and financial tracking—all backed by multi-tenant isolation, role-based access control (RBAC), and bi-directional Atlassian Jira integration.
 
 ---
-
 ## 🌟 Key Features
 
 - **Fleet & Vehicle Inventory**: Track vehicle status (`Available`, `On_Trip`, `In_Shop`, `Retired`), capacity, odometer readings, and acquisition cost.
