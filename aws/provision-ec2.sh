@@ -24,13 +24,17 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 echo "✅ Authenticated as AWS Account: $ACCOUNT_ID"
 
 # 2. Check or Create Key Pair
-if ! aws ec2 describe-key-pairs --key-names "$KEY_NAME" --region "$REGION" >/dev/null 2>&1; then
-  echo "🔑 Key pair '$KEY_NAME' does not exist in AWS. Creating it..."
+if ! aws ec2 describe-key-pairs --key-names "$KEY_NAME" --region "$REGION" >/dev/null 2>&1 || [ ! -f "${KEY_NAME}.pem" ]; then
+  if aws ec2 describe-key-pairs --key-names "$KEY_NAME" --region "$REGION" >/dev/null 2>&1; then
+    echo "⚠️ Key pair '$KEY_NAME' exists in AWS but local '${KEY_NAME}.pem' was missing. Recreating key pair in AWS..."
+    aws ec2 delete-key-pair --key-name "$KEY_NAME" --region "$REGION"
+  fi
+  echo "🔑 Creating key pair '$KEY_NAME'..."
   aws ec2 create-key-pair --key-name "$KEY_NAME" --query 'KeyMaterial' --output text --region "$REGION" > "${KEY_NAME}.pem"
   chmod 400 "${KEY_NAME}.pem"
   echo "✅ Private key saved to: $(pwd)/${KEY_NAME}.pem"
 else
-  echo "✅ Key pair '$KEY_NAME' exists in AWS."
+  echo "✅ Key pair '$KEY_NAME' exists in AWS and local '${KEY_NAME}.pem' found."
 fi
 
 # 3. Find default VPC
